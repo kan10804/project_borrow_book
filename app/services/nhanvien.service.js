@@ -19,6 +19,9 @@ class NhanVienService {
 
     return nv;
   }
+  async findByMSNV(msnv) {
+    return await this.NhanVien.findOne({ MSNV: Number(msnv) });
+  }
 
   // Tạo hoặc cập nhật theo MSNV
   async create(payload) {

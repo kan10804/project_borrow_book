@@ -3,6 +3,9 @@ const nhanvien = require("../controllers/nhanvien.controller");
 
 const router = express.Router();
 
+router.get("/msnv/:msnv", nhanvien.findByMSNV);
+
+// CRUD mặc định
 router
   .route("/")
   .get(nhanvien.findAll)

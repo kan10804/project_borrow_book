@@ -83,17 +83,16 @@ export default {
       try {
         const MaDocGia = String(this.user.MaDocGia);
         this.records = await TheoDoiMuonSachService.searchByDocGia(MaDocGia);
+        console.log("Kết quả FE nhận:", this.records);
 
       } catch (err) {
         console.error(err);
         alert("Không thể tải lịch sử mượn sách!");
       }
     },
-
-    // ⬅️ HIỂN THỊ MÀU CHO TRẠNG THÁI
     statusClass(status) {
       switch (status) {
-        case "Đang mượn":
+        case "Chờ duyệt":
           return "badge bg-warning text-dark";
         case "Đã duyệt":
           return "badge bg-info text-dark";
@@ -118,17 +117,6 @@ export default {
       }
     },
 
-    async deleteAll() {
-      if (!confirm("Xóa toàn bộ lịch sử mượn sách?")) return;
-
-      try {
-        await TheoDoiMuonSachService.deleteAll();
-        this.records = [];
-      } catch (err) {
-        console.error(err);
-        alert("Không thể xóa dữ liệu!");
-      }
-    }
   }
 };
 </script>

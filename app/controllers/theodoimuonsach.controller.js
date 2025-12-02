@@ -8,6 +8,11 @@ exports.create = async (req, res, next) => {
     return next(new ApiError(400, "MaDocGia và MaSach không được để trống"));
   }
 
+  // thêm mặc định
+  if (!req.body.TrangThai) {
+    req.body.TrangThai = "Chờ duyệt";
+  }
+
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
     const doc = await service.create(req.body);
@@ -17,15 +22,19 @@ exports.create = async (req, res, next) => {
   }
 };
 
-// Lấy tất cả bản ghi
+// Lấy tất cả bản ghi hoặc theo MaDocGia
 exports.findAll = async (req, res, next) => {
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
     const { MaDocGia } = req.query;
 
     let docs = [];
-    if (MaDocGia) docs = await service.findByDocGia(MaDocGia);
-    else docs = await service.find({});
+
+    if (MaDocGia) {
+      docs = await service.find({ MaDocGia: Number(MaDocGia) });
+    } else {
+      docs = await service.find({});
+    }
 
     return res.send(docs);
   } catch (err) {
@@ -81,16 +90,22 @@ exports.delete = async (req, res, next) => {
   }
 };
 
-// Xóa toàn bộ bản ghi mượn sách
-exports.deleteAll = async (_req, res, next) => {
+// Xóa toàn bộ bản ghi theo MaDocGia
+exports.deleteAll = async (req, res, next) => {
   try {
+    const { MaDocGia } = req.query;
+
+    if (!MaDocGia) {
+      return next(new ApiError(400, "Thiếu MaDocGia để xóa lịch sử"));
+    }
+
     const service = new TheoDoiMuonSachService(MongoDB.client);
-    const count = await service.deleteAll();
+    const result = await service.deleteAllByDocGia(MaDocGia);
 
     return res.send({
-      message: `${count} bản ghi mượn sách đã bị xóa`,
+      message: `${result.deletedCount} bản ghi đã bị xóa`,
     });
   } catch (err) {
-    return next(new ApiError(500, "Lỗi khi xóa toàn bộ bản ghi mượn"));
+    return next(new ApiError(500, "Lỗi khi xóa lịch sử mượn"));
   }
 };

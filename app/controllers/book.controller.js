@@ -57,7 +57,7 @@ exports.findOne = async (req, res, next) => {
   }
 };
 
-// Cập nhật thông tin sách
+// Cập nhật sách
 exports.update = async (req, res, next) => {
   if (Object.keys(req.body).length === 0) {
     return next(new ApiError(400, "Dữ liệu cập nhật không được để trống"));
@@ -77,7 +77,7 @@ exports.update = async (req, res, next) => {
   }
 };
 
-// Xóa 1 sách
+// Xóa sách
 exports.delete = async (req, res, next) => {
   try {
     const bookService = new BookService(MongoDB.client);
@@ -93,14 +93,14 @@ exports.delete = async (req, res, next) => {
   }
 };
 
-// Lấy danh sách sách đang được mượn (ví dụ: favorite)
+// Sách yêu thích
 exports.findAllFavorite = async (_req, res, next) => {
   try {
     const bookService = new BookService(MongoDB.client);
     const documents = await bookService.findFavorite();
     return res.send(documents);
   } catch (error) {
-    return next(new ApiError(500, "Lỗi khi lấy danh sách sách đang được mượn"));
+    return next(new ApiError(500, "Lỗi khi lấy danh sách sách yêu thích"));
   }
 };
 
