@@ -30,6 +30,22 @@ exports.findAll = async (req, res, next) => {
     return next(new ApiError(500, "Lỗi khi lấy danh sách nhân viên"));
   }
 };
+exports.findByMSNV = async (req, res, next) => {
+  try {
+    const msnv = req.params.msnv;
+    const service = new NhanVienService(MongoDB.client);
+    const result = await service.findByMSNV(msnv);
+
+    if (!result) {
+      return res.status(404).json({ message: "Không tìm thấy nhân viên" });
+    }
+
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+    return next(error);
+  }
+};
 
 exports.findOne = async (req, res, next) => {
   try {

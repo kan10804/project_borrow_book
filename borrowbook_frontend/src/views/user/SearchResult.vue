@@ -60,7 +60,6 @@ export default {
     }
   },
 
-  // 🔥 FIX QUAN TRỌNG: Cập nhật khi từ khóa thay đổi
   watch: {
     "$route.query.TenSach": {
       async handler(newValue) {

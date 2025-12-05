@@ -47,6 +47,6 @@ export default {
 /* Vùng hiển thị nội dung user */
 .page-content {
   padding: 20px;
-  padding-top: 90px; /* ⭐️ thêm khoảng trống cho navbar fixed */
+  padding-top: 90px; 
 }
 </style>

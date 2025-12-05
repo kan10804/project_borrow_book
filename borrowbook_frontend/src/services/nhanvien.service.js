@@ -42,7 +42,8 @@ class NhanVienService {
 
   // Tìm nhân viên bằng MSNV (phục vụ login)
   async findByMSNV(MSNV) {
-    return (await this.api.get(`/?MSNV=${MSNV}`)).data;
+    // backend exposes /msnv/:msnv
+    return (await this.api.get(`/msnv/${MSNV}`)).data;
   }
 }
 

@@ -10,13 +10,13 @@
     <!-- MENU CHÍNH -->
     <ul class="menu">
 
-      <li :class="{ active: isActive('/') }" @click="go('/')">
-        <i class="fas fa-compass"></i>
+      <li :class="{ active: isActive('/admin/books') }" @click="goNamed('ManageBooks')">
+        <i class="fas fa-book"></i>
         <span>Quản lý sách</span>
       </li>
 
-      <li :class="{ active: isActive('/') }" @click="go('/')">
-      <i class="fas fa-layer-group"></i>
+      <li :class="{ active: isActive('/admin/borrows') }" @click="goNamed('ManageBorrows')">
+        <i class="fas fa-layer-group"></i>
         <span>Quản lý mượn sách</span>
       </li>
     </ul>
@@ -31,13 +31,13 @@
 
 <script>
 export default {
-  name: "UserSidebar",
+  name: "AdminSidebar",
   methods: {
-    go(path) {
-      this.$router.push(path);
+    goNamed(name) {
+      this.$router.push({ name });
     },
     isActive(path) {
-      return this.$route.path === path;
+      return this.$route.path === path || this.$route.path.startsWith(path + "/");
     },
     logout() {
       alert("Đăng xuất!");

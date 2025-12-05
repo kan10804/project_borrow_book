@@ -57,7 +57,7 @@ class TheoDoiMuonSachService {
     const update = this.extractData(payload);
 
     const result = await this.MuonSach.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { _id: ObjectId.isValid(id) ? new ObjectId(id) : null },
       { $set: update },
       { returnDocument: "after" }
     );

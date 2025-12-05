@@ -2,6 +2,7 @@ const { ObjectId } = require("mongodb");
 
 class BookService {
   constructor(client) {
+    this.client = client;
     this.Book = client.db("BorrowBook").collection("Sach");
   }
 
@@ -30,13 +31,55 @@ class BookService {
   async create(payload) {
     const book = this.extractBookData(payload);
 
-    const result = await this.Book.findOneAndUpdate(
-      { MaSach: book.MaSach },
-      { $set: book },
+    // If MaSach provided, upsert as before. If not, generate a new incremental MaSach (S1, S2...)
+    if (book.MaSach) {
+      const result = await this.Book.findOneAndUpdate(
+        { MaSach: book.MaSach },
+        { $set: book },
+        { returnDocument: "after", upsert: true }
+      );
+
+      return result.value;
+    }
+
+    // Generate new MaSach using an atomic counter document to avoid races
+    const counters = this.client.db("BorrowBook").collection("counters");
+
+    // Ensure counter exists and is initialized to the current max numeric suffix
+    let existingCounter = await counters.findOne({ _id: "MaSach" });
+    if (!existingCounter) {
+      // compute max numeric suffix among existing MaSach values (handles S1 and S001)
+      const docs = await this.Book.find({ MaSach: { $regex: /^S0*\d+$/ } })
+        .project({ MaSach: 1 })
+        .toArray();
+      let maxNum = 0;
+      for (const d of docs) {
+        const m = d.MaSach && d.MaSach.match(/^S0*(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      }
+      // insert counter with current max (so next increment will be max+1)
+      await counters.insertOne({ _id: "MaSach", seq: maxNum });
+    }
+
+    const seqDoc = await counters.findOneAndUpdate(
+      { _id: "MaSach" },
+      { $inc: { seq: 1 } },
       { returnDocument: "after", upsert: true }
     );
 
-    return result;
+    const seq = seqDoc.value && seqDoc.value.seq ? seqDoc.value.seq : 1;
+    book.MaSach = `S${seq}`;
+
+    const insertRes = await this.Book.insertOne(book);
+    if (insertRes.insertedId) {
+      const created = await this.Book.findOne({ _id: insertRes.insertedId });
+      return created;
+    }
+
+    return null;
   }
 
   async find(filter) {

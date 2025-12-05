@@ -23,6 +23,18 @@ class NhanVienService {
     return await this.NhanVien.findOne({ MSNV: Number(msnv) });
   }
 
+  // Tìm theo số điện thoại (chuỗi)
+  async findByPhone(phone) {
+    const p = String(phone);
+    // try exact match first
+    let doc = await this.NhanVien.findOne({ SoDienThoai: p });
+    if (doc) return doc;
+
+    // fallback: match if stored phone contains the digits (handles trailing commas/formatting)
+    doc = await this.NhanVien.findOne({ SoDienThoai: { $regex: p } });
+    return doc;
+  }
+
   // Tạo hoặc cập nhật theo MSNV
   async create(payload) {
     const nv = this.extractData(payload);

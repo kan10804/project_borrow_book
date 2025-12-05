@@ -1,79 +1,107 @@
+// auth.controller.js
 const DocGiaService = require("../services/docgia.service");
+const NhanVienService = require("../services/nhanvien.service");
 const AuthService = require("../services/auth.service");
 const ApiError = require("../api-error");
 const MongoDB = require("../utils/mongodb.util");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-exports.register = async (req, res, next) => {
-  const { MaDocGia, HoLot, Ten, Email, Password } = req.body;
+const JWT_SECRET = process.env.JWT_SECRET || "SECRET_KEY_JWT";
 
-  if (!Email || !Password)
-    return next(new ApiError(400, "Email và mật khẩu không được để trống"));
+// Check xem password có phải bcrypt chưa
+function isHashed(pwd) {
+  return typeof pwd === "string" && pwd.startsWith("$2");
+}
 
-  try {
-    const docgiaService = new DocGiaService(MongoDB.client);
-    const authService = new AuthService(docgiaService.DocGia);
-
-    // Kiểm tra email tồn tại
-    const existed = await authService.findByEmail(Email);
-    if (existed) return next(new ApiError(400, "Email đã tồn tại"));
-
-    // Hash password
-    const hashed = await authService.hashPassword(Password);
-
-    // Tạo độc giả mới
-    const result = await docgiaService.create({
-      MaDocGia,
-      HoLot,
-      Ten,
-      Email,
-      Password: hashed,
-    });
-
-    return res.send({
-      message: "Đăng ký thành công",
-      docgia: result.value,
-    });
-  } catch (err) {
-    return next(new ApiError(500, "Lỗi khi đăng ký"));
-  }
-};
-
-exports.login = async (req, res, next) => {
-  const { Email, Password } = req.body;
-
-  if (!Email || !Password)
-    return next(new ApiError(400, "Email và mật khẩu không được để trống"));
+exports.login = async (req, res) => {
+  const { username, password } = req.body;
 
   try {
-    const docgiaService = new DocGiaService(MongoDB.client);
-    const authService = new AuthService(docgiaService.DocGia);
+    if (!username || !password) {
+      return res.status(400).json({ message: "Thiếu username hoặc password" });
+    }
 
-    // Kiểm email tồn tại
-    const user = await authService.findByEmail(Email);
-    if (!user) return next(new ApiError(404, "Email không tồn tại"));
+    const docGiaService = new DocGiaService(MongoDB.client);
+    const nhanVienService = new NhanVienService(MongoDB.client);
 
-    // Kiểm mật khẩu
-    const ok = await authService.comparePassword(Password, user.Password);
-    if (!ok) return next(new ApiError(401, "Sai mật khẩu"));
+    let user = null;
+    let role = null;
 
-    // Tạo token
-    const token = jwt.sign({ id: user._id, role: "user" }, "SECRET_KEY_JWT", {
-      expiresIn: "2h",
-    });
+    // Tìm DocGia theo Email
+    if (typeof username === "string" && username.includes("@")) {
+      user = await docGiaService.findByEmail(username);
+      if (user) role = "docgia";
+    }
 
-    return res.send({
+    // Nếu không tìm được, thử tìm NhanVien theo MSNV
+    if (!user) {
+      const asNum = Number(username);
+      if (!isNaN(asNum) && asNum > 0) {
+        user = await nhanVienService.findByMSNV(asNum);
+        if (user) role = "nhanvien";
+      }
+    }
+
+    // Nếu không tìm được, tìm NhanVien theo SĐT (loại bỏ ký tự không phải số)
+    if (!user) {
+      const digitsOnly = String(username).replace(/\D+/g, "");
+      if (digitsOnly.length >= 7) {
+        user = await nhanVienService.findByPhone(digitsOnly);
+        if (user) role = "nhanvien";
+      }
+    }
+
+    // Nếu vẫn không tìm được, thử DocGia theo MaDocGia
+    if (!user) {
+      const asNum = Number(username);
+      if (!isNaN(asNum) && asNum > 0) {
+        user = await docGiaService.findByMaDocGia(asNum);
+        if (user) role = "docgia";
+      }
+    }
+
+    if (!user) {
+      return res.status(400).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    }
+
+    // Lấy password từ DB
+    let dbPwd = user.Password ?? user.password ?? "";
+    if (!dbPwd) {
+      return res.status(400).json({ message: "Tài khoản chưa có mật khẩu" });
+    }
+
+    // So sánh mật khẩu
+    let match = false;
+    if (isHashed(String(dbPwd))) {
+      match = await bcrypt.compare(String(password), String(dbPwd));
+    } else {
+      match = String(password) === String(dbPwd);
+    }
+
+    if (!match) {
+      return res.status(400).json({ message: "Sai mật khẩu" });
+    }
+    const payload = { id: user._id, role };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+
+    const userObj = JSON.parse(JSON.stringify(user));
+    delete userObj.password;
+
+    return res.json({
       message: "Đăng nhập thành công",
+      role,
       token,
-      user,
+      user: userObj,
     });
-  } catch (err) {
-    return next(new ApiError(500, "Lỗi khi đăng nhập"));
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
 exports.logout = async (_req, res) => {
   return res.send({
-    message: "Đăng xuất thành công (client hãy xoá token ở localStorage)",
+    message: "Đăng xuất thành công!",
   });
 };

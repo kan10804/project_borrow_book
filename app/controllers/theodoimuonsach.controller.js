@@ -15,6 +15,20 @@ exports.create = async (req, res, next) => {
 
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
+
+    // Kiểm tra giới hạn mượn: mỗi độc giả chỉ được mượn tối đa 3 cuốn (không tính sách đã trả)
+    const maDocGiaNum = Number(req.body.MaDocGia);
+    const maSach = req.body.MaSach;
+
+    const activeBorrows = await service.find({ MaDocGia: maDocGiaNum, TrangThai: { $ne: "Đã trả" } });
+
+    // Nếu đã có 3 hoặc hơn bản ghi đang mượn và không phải là cùng cuốn sách (trường hợp upsert/update), chặn tạo mới
+    const hasSameBook = activeBorrows.some((b) => String(b.MaSach) === String(maSach));
+
+    if (activeBorrows.length >= 3 && !hasSameBook) {
+      return next(new ApiError(400, "Mỗi độc giả chỉ được mượn tối đa 3 cuốn cùng lúc"));
+    }
+
     const doc = await service.create(req.body);
     return res.send(doc);
   } catch (err) {
@@ -69,7 +83,7 @@ exports.update = async (req, res, next) => {
     if (!doc)
       return next(new ApiError(404, "Không tìm thấy bản ghi mượn sách"));
 
-    return res.send({ message: "Cập nhật bản ghi mượn thành công" });
+    return res.send(doc);
   } catch (err) {
     return next(new ApiError(500, "Lỗi khi cập nhật bản ghi"));
   }

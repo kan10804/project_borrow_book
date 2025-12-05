@@ -1,35 +1,18 @@
 <template>
   <div>
     <div class="navbar" :style="navbarStyle">
-
-      <!-- SEARCH BAR -->
-      <div class="search-box">
-        <i class="fas fa-search search-icon" @click="goSearch"></i>
-        <input
-          type="text"
-          v-model="keyword"
-          @input="handleTyping"
-          @keyup.enter="goSearch"
-          placeholder="Bạn có thể tìm sách ở đây..."
-        />
-      </div>
-
-      <!-- RIGHT SECTION -->
       <div class="right">
 
-        <!-- Nếu đăng nhập rồi -->
         <div v-if="loggedIn" class="user-info logged" @click="toggleMenu">
           <i class="fas fa-user avatar"></i>
           <span class="username">{{ usernameDisplay }}</span>
           <i class="fas fa-chevron-down arrow"></i>
 
-          <div v-if="menuOpen" class="dropdown" @click.stop>
-            <p @click="openProfile">Thông tin cá nhân</p>
+          <div v-if="menuOpen" class="dropdown" @click.stop>  
             <p @click="logout">Đăng xuất</p>
           </div>
         </div>
 
-        <!-- Chưa đăng nhập -->
         <div v-else class="user-info" @click="toggleMenu">
           <i class="fas fa-user avatar"></i>
           <span class="username">Đăng nhập</span>
@@ -44,7 +27,7 @@
       </div>
     </div>
 
-    <!-- POPUP FORM -->
+
     <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
       <div class="popup-box">
 
@@ -73,8 +56,8 @@
 
 <script>
 import axios from "axios";
-import LoginForm from "@/components/user/LoginForm.vue";
-import RegisterForm from "@/components/user/RegisterForm.vue";
+import LoginForm from "@/components/common/LoginForm.vue";
+import RegisterForm from "@/components/common/RegisterForm.vue";
 import EditProfileForm from "@/components/user/EditProfileForm.vue";
 
 export default {
@@ -112,16 +95,18 @@ export default {
     const saved = localStorage.getItem("user");
     if (saved) {
       this.currentUser = JSON.parse(saved);
-      this.usernameDisplay = `${this.currentUser.HoLot} ${this.currentUser.Ten}`;
+      if (this.currentUser.role === "nhanvien") {
+        this.usernameDisplay = this.currentUser.HoTenNV || `${this.currentUser.HoLot || ""} ${this.currentUser.Ten || ""}`.trim();
+      } else {
+        this.usernameDisplay = `${this.currentUser.HoLot || ""} ${this.currentUser.Ten || ""}`.trim();
+      }
       this.loggedIn = true;
     }
   },
 
   methods: {
 
-    /* ============================
-       SEARCH HANDLE
-    ============================ */
+
     handleTyping() {
       clearTimeout(this.searchTimeout);
 
@@ -168,35 +153,65 @@ export default {
       this.showPopup = false;
     },
 
-    /* ============================
-       LOGIN
-    ============================ */
-    async handleLogin(payload) {
-      try {
-        const res = await axios.get(
-          `http://localhost:3000/api/docgia/email/${payload.username}`
-        );
 
-        this.currentUser = res.data;
-        localStorage.setItem("user", JSON.stringify(res.data));
+    async handleLogin({ username, password }) {
+  try {
+    console.log("Attempting login with:", username);
+    
+    const res = await axios.post(
+      "http://localhost:3000/api/auth/login",
+      { username, password }
+    );
 
-        this.usernameDisplay = `${res.data.HoLot} ${res.data.Ten}`;
-        this.loggedIn = true;
+    console.log("Login response received:", res.data);
 
-        this.closePopup();
+    const { role, user, token } = res.data;
 
-      } catch (e) {
-        alert("Sai tài khoản hoặc mật khẩu!");
-      }
-    },
+    if (!role || !user) {
+      throw new Error("Invalid response format: missing role or user");
+    }
+
+    // Lưu user + role + token
+    localStorage.setItem("user", JSON.stringify({ ...user, role }));
+    localStorage.setItem("token", token);
+
+    this.currentUser = user;
+    // Hiển thị tên theo role: staff dùng HoTenNV, reader dùng HoLot+Ten
+    if (role === "nhanvien") {
+      this.usernameDisplay = user.HoTenNV || `${user.HoLot || ""} ${user.Ten || ""}`.trim();
+    } else {
+      this.usernameDisplay = `${user.HoLot || ""} ${user.Ten || ""}`.trim();
+    }
+    this.loggedIn = true;
+
+    console.log("Login successful, redirecting to:", role === "docgia" ? "UserHome" : "AdminHome");
+
+    // Điều hướng theo role
+    if (role === "docgia") {
+      this.$router.push({ name: "UserHome" });
+    } else if (role === "nhanvien") {
+      this.$router.push({ name: "AdminHome" });
+    }
+
+    this.closePopup();
+
+  } catch (err) {
+    console.error("Login error:", err.message);
+    console.error("Full error object:", err);
+    if (err.response) {
+      console.error("Response status:", err.response.status);
+      console.error("Response data:", err.response.data);
+    }
+    const msg = err.response?.data?.message || "Sai tài khoản hoặc mật khẩu";
+    alert(msg);
+  }
+},
+
 
     handleRegister() {
       this.closePopup();
     },
 
-    /* ============================
-       UPDATE PROFILE
-    ============================ */
     async updateProfile(data) {
       try {
         const id = data.MaDocGia;
@@ -225,9 +240,7 @@ export default {
       }
     },
 
-    /* ============================
-       LOGOUT
-    ============================ */
+
     logout() {
       localStorage.removeItem("user");
       this.loggedIn = false;
@@ -240,7 +253,7 @@ export default {
 </script>
 
 <style scoped>
-/* NAVBAR */
+
 .navbar {
   height: 70px;
   background: #ffffff;
@@ -255,7 +268,6 @@ export default {
   transition: left 0.2s ease, width 0.2s ease;
 }
 
-/* SEARCH BOX */
 .search-box {
   position: relative;
   width: 350px;
@@ -287,14 +299,13 @@ export default {
   cursor: pointer;
 }
 
-/* RIGHT */
+
 .right {
   display: flex;
   align-items: center;
   gap: 25px;
 }
 
-/* USER INFO */
 .user-info {
   position: relative;
   display: flex;
@@ -317,7 +328,7 @@ export default {
   color: #666;
 }
 
-/* DROPDOWN */
+/* DROPDOWN 
 .dropdown {
   position: absolute;
   top: 45px;
@@ -340,7 +351,7 @@ export default {
   background: #f0f0f0;
 }
 
-/* POPUP OVERLAY */
+/* POPUP OVERLAY 
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -354,7 +365,7 @@ export default {
   z-index: 2000;
 }
 
-/* BOX */
+// BOX 
 .popup-box {
   background: transparent !important;
   padding: 0 !important;

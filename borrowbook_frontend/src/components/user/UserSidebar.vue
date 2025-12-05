@@ -1,34 +1,26 @@
 <template>
   <div class="sidebar">
 
-    <!-- LOGO -->
     <div class="logo">
       <i class="fas fa-home logo-icon"></i>
       <span class="logo-text">Góc Sách</span>
     </div>
 
-    <!-- MENU CHÍNH -->
     <ul class="menu">
 
-      <li :class="{ active: isActive('/') }" @click="go('/')">
+      <li :class="{ active: isActive('UserHome') }" @click="go('/user')">
         <i class="fas fa-compass"></i>
         <span>Sách</span>
       </li>
 
-      <li :class="{ active: isActive('/history') }" @click="go('/history')">
-      <i class="fas fa-layer-group"></i>
-    <span>Lịch sử</span>
-</li>
-
-
-      
+      <li :class="{ active: isActive('BorrowHistory') }" @click="go('/user/borrow-history')">
+        <i class="fas fa-layer-group"></i>
+        <span>Lịch sử</span>
+      </li>
 
     </ul>
 
     <hr />
-
-    <!-- MENU DƯỚI -->
-   
 
   </div>
 </template>
@@ -36,17 +28,16 @@
 <script>
 export default {
   name: "UserSidebar",
+
   methods: {
     go(path) {
       this.$router.push(path);
     },
-    isActive(path) {
-      return this.$route.path === path;
-    },
-    logout() {
-      alert("Đăng xuất!");
-    },
-  },
+
+    isActive(routeName) {
+      return this.$route.name === routeName;
+    }
+  }
 };
 </script>
 

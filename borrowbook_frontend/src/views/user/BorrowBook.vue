@@ -102,7 +102,7 @@ export default {
 
     async submitBorrow() {
       if (this.form.NgayTra > this.maxReturnDate) {
-        alert("❌ Ngày trả không được quá 14 ngày!");
+        alert(" Ngày trả không được quá 14 ngày!");
         return;
       }
 
@@ -120,7 +120,8 @@ export default {
         this.$router.push("/");
       } catch (error) {
         console.error(error);
-        alert("❌ Không thể mượn sách!");
+        const msg = error.response?.data?.message || error.message || " Không thể mượn sách!";
+        alert(` ${msg}`);
       }
     }
   }

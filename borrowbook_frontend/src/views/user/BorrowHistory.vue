@@ -31,7 +31,6 @@
             <td>{{ item.NgayMuon }}</td>
             <td>{{ item.NgayTra }}</td>
 
-            <!-- 🔥 HIỂN THỊ TRẠNG THÁI VỚI MÀU BG -->
             <td class="text-center">
               <span :class="statusClass(item.TrangThai)">
                 {{ item.TrangThai }}
@@ -40,7 +39,7 @@
 
             <td class="text-center">
               <button class="btn btn-outline-danger btn-sm" @click="deleteOne(item._id)">
-                <i class="bi bi-x-circle"></i> Xóa
+                <i class="bi bi-x-circle"></i> Huỷ mượn
               </button>
             </td>
           </tr>

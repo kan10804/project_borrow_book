@@ -1,8 +1,6 @@
 <template>
   <div>
     <div class="navbar" :style="navbarStyle">
-
-      <!-- SEARCH BAR -->
       <div class="search-box">
         <i class="fas fa-search search-icon" @click="goSearch"></i>
         <input
@@ -13,11 +11,7 @@
           placeholder="Bạn có thể tìm sách ở đây..."
         />
       </div>
-
-      <!-- RIGHT SECTION -->
       <div class="right">
-
-        <!-- Nếu đăng nhập rồi -->
         <div v-if="loggedIn" class="user-info logged" @click="toggleMenu">
           <i class="fas fa-user avatar"></i>
           <span class="username">{{ usernameDisplay }}</span>
@@ -29,7 +23,6 @@
           </div>
         </div>
 
-        <!-- Chưa đăng nhập -->
         <div v-else class="user-info" @click="toggleMenu">
           <i class="fas fa-user avatar"></i>
           <span class="username">Đăng nhập</span>
@@ -44,7 +37,6 @@
       </div>
     </div>
 
-    <!-- POPUP FORM -->
     <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
       <div class="popup-box">
 
@@ -73,8 +65,8 @@
 
 <script>
 import axios from "axios";
-import LoginForm from "@/components/user/LoginForm.vue";
-import RegisterForm from "@/components/user/RegisterForm.vue";
+import LoginForm from "@/components/common/LoginForm.vue";
+import RegisterForm from "@/components/common/RegisterForm.vue";
 import EditProfileForm from "@/components/user/EditProfileForm.vue";
 
 export default {
@@ -112,16 +104,16 @@ export default {
     const saved = localStorage.getItem("user");
     if (saved) {
       this.currentUser = JSON.parse(saved);
-      this.usernameDisplay = `${this.currentUser.HoLot} ${this.currentUser.Ten}`;
+      if (this.currentUser.role === "nhanvien") {
+        this.usernameDisplay = this.currentUser.HoTenNV || `${this.currentUser.HoLot || ""} ${this.currentUser.Ten || ""}`.trim();
+      } else {
+        this.usernameDisplay = `${this.currentUser.HoLot || ""} ${this.currentUser.Ten || ""}`.trim();
+      }
       this.loggedIn = true;
     }
   },
 
   methods: {
-
-    /* ============================
-       SEARCH HANDLE
-    ============================ */
     handleTyping() {
       clearTimeout(this.searchTimeout);
 
@@ -168,35 +160,62 @@ export default {
       this.showPopup = false;
     },
 
-    /* ============================
-       LOGIN
-    ============================ */
-    async handleLogin(payload) {
-      try {
-        const res = await axios.get(
-          `http://localhost:3000/api/docgia/email/${payload.username}`
-        );
+    async handleLogin({ username, password }) {
+    try {
+      console.log("Attempting login with:", username);
 
-        this.currentUser = res.data;
-        localStorage.setItem("user", JSON.stringify(res.data));
+      const res = await axios.post("http://localhost:3000/api/auth/login", {
+        username,
+        password,
+      });
 
-        this.usernameDisplay = `${res.data.HoLot} ${res.data.Ten}`;
-        this.loggedIn = true;
+      console.log("Login response received:", res.data);
 
-        this.closePopup();
+      const data = res.data || {};
+      const role = data.role || data.data?.role;
+      const user = data.user || data.data?.user || data;
+      const token = data.token || data.data?.token;
 
-      } catch (e) {
-        alert("Sai tài khoản hoặc mật khẩu!");
+      if (!role || !user) {
+ 
+        console.warn("Login response missing role/user", res.data);
+        const msg = data.message || "Đăng nhập thất bại (đáp ứng không hợp lệ)";
+        alert(msg);
+        return;
       }
-    },
+
+      localStorage.setItem("user", JSON.stringify({ ...user, role }));
+      if (token) localStorage.setItem("token", token);
+
+      this.currentUser = user;
+      this.usernameDisplay = role === "nhanvien"
+        ? (user.HoTenNV || `${user.HoLot || ""} ${user.Ten || ""}`.trim())
+        : `${user.HoLot || ""} ${user.Ten || ""}`.trim();
+      this.loggedIn = true;
+
+      if (role === "docgia") {
+        this.$router.push({ name: "UserHome" });
+      } else if (role === "nhanvien") {
+        this.$router.push({ name: "AdminHome" });
+      }
+
+      this.closePopup();
+    } catch (err) {
+      console.error("Login error:", err?.message || err);
+      console.error("Full error object:", err);
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+      }
+      const msg = err.response?.data?.message || "Sai tài khoản hoặc mật khẩu!";
+      alert(msg);
+    }
+},
 
     handleRegister() {
       this.closePopup();
     },
 
-    /* ============================
-       UPDATE PROFILE
-    ============================ */
     async updateProfile(data) {
       try {
         const id = data.MaDocGia;
@@ -225,9 +244,6 @@ export default {
       }
     },
 
-    /* ============================
-       LOGOUT
-    ============================ */
     logout() {
       localStorage.removeItem("user");
       this.loggedIn = false;

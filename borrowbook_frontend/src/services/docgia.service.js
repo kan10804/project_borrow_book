@@ -15,6 +15,11 @@ class DocGiaService {
     return (await this.api.get(`/${id}`)).data;
   }
 
+  // Tìm theo MaDocGia (wrapper dùng cho login)
+  async findByMaDocGia(maDocGia) {
+    return (await this.api.get(`/${maDocGia}`)).data;
+  }
+
   // Tìm theo tên
   async searchByName(name) {
     return (await this.api.get(`/?Ten=${name}`)).data;

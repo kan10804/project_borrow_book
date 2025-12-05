@@ -10,7 +10,9 @@ exports.create = async (req, res, next) => {
 
   try {
     const bookService = new BookService(MongoDB.client);
+    console.log("[book.controller.create] req.body:", req.body);
     const document = await bookService.create(req.body);
+    console.log("[book.controller.create] created doc:", document);
     return res.send(document);
   } catch (error) {
     return next(new ApiError(500, "Đã xảy ra lỗi khi thêm sách mới"));

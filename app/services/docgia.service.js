@@ -23,9 +23,7 @@ class DocGiaService {
     return docgia;
   }
 
-  // =============================
   // CREATE
-  // =============================
   async create(payload) {
     const dg = this.extractData(payload);
     dg.MaDocGia = payload.MaDocGia; // vẫn giữ MaDocGia khi tạo
@@ -34,39 +32,29 @@ class DocGiaService {
     return { _id: result.insertedId, ...dg };
   }
 
-  // =============================
   // Tìm tất cả
-  // =============================
   async find(filter) {
     return await this.DocGia.find(filter).toArray();
   }
 
-  // =============================
   // 🔥 Tìm theo MaDocGia
-  // =============================
   async findByMaDocGia(maDocGia) {
     return await this.DocGia.findOne({ MaDocGia: Number(maDocGia) });
   }
 
-  // =============================
   // Tìm theo Email
-  // =============================
   async findByEmail(email) {
     return await this.DocGia.findOne({ Email: email });
   }
 
-  // =============================
   // Tìm theo tên
-  // =============================
   async findByName(name) {
     return await this.find({
       Ten: { $regex: new RegExp(name, "i") },
     });
   }
 
-  // =============================
   // UPDATE theo MaDocGia
-  // =============================
   async update(maDocGia, payload) {
     delete payload._id;
     delete payload.MaDocGia;
@@ -82,18 +70,14 @@ class DocGiaService {
     return result;
   }
 
-  // =============================
   // XÓA theo MaDocGia
-  // =============================
   async delete(maDocGia) {
     return await this.DocGia.findOneAndDelete({
       MaDocGia: Number(maDocGia),
     });
   }
 
-  // =============================
   // XÓA TẤT CẢ
-  // =============================
   async deleteAll() {
     const result = await this.DocGia.deleteMany({});
     return result.deletedCount;

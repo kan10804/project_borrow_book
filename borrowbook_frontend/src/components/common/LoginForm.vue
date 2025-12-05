@@ -7,7 +7,7 @@
     <!-- Username -->
     <div class="modern-input mb-3">
       <i class="fa fa-user icon"></i>
-      <input type="text" class="" placeholder="Tài khoản..." v-model="username" />
+      <input type="text" class="" placeholder="Email hoặc Số điện thoại..." v-model="username" />
     </div>
 
     <!-- Password -->
@@ -42,6 +42,8 @@ export default {
         this.message = "Vui lòng nhập tài khoản và mật khẩu!";
         return;
       }
+
+      console.log("Emitting login with:", { username: this.username, password: this.password });
 
       // gửi dữ liệu lên component cha
       this.$emit("login", {

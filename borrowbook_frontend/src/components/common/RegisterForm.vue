@@ -117,12 +117,12 @@ export default {
           !this.DiaChi || !this.DienThoai || !this.Email ||
           !this.Password || !this.Confirm) 
       {
-        this.message = "❌ Vui lòng nhập đầy đủ tất cả các trường!";
+        this.message = "Vui lòng nhập đầy đủ tất cả các trường!";
         return false;
       }
 
       if (this.Password !== this.Confirm) {
-        this.message = "❌ Mật khẩu nhập lại không khớp!";
+        this.message = "Mật khẩu nhập lại không khớp!";
         return false;
       }
 
@@ -147,7 +147,7 @@ export default {
 
         await axios.post("http://localhost:3000/api/docgia", payload);
 
-        this.message = "🎉 Đăng ký thành công!";
+        this.message = "Đăng ký thành công!";
 
         // reset form
         Object.assign(this.$data, this.$options.data());
