@@ -254,8 +254,7 @@ export default {
 
 <style scoped>
 
-.navbar {
-  height: 70px;
+.navbar { height: 70px;
   background: #ffffff;
   display: flex;
   align-items: center;
@@ -328,7 +327,7 @@ export default {
   color: #666;
 }
 
-/* DROPDOWN 
+
 .dropdown {
   position: absolute;
   top: 45px;
@@ -351,7 +350,7 @@ export default {
   background: #f0f0f0;
 }
 
-/* POPUP OVERLAY 
+ 
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -365,7 +364,7 @@ export default {
   z-index: 2000;
 }
 
-// BOX 
+
 .popup-box {
   background: transparent !important;
   padding: 0 !important;

@@ -12,6 +12,7 @@ class BookService {
       MaSach: payload.MaSach,
       TenSach: payload.TenSach,
       TacGia: payload.TacGia,
+      MoTa: payload.MoTa,
       NamXuatBan: payload.NamXuatBan,
       SoQuyen: payload.SoQuyen,
       DonGia: payload.DonGia,

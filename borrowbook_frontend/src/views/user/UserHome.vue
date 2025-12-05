@@ -13,13 +13,14 @@
         class="book-item card h-100 shadow-sm"
         v-for="book in books"
         :key="book._id"
+        @click="viewDetail(book)"
       >
         <!-- Ảnh sách -->
         <div class="image-container">
           <img :src="book.AnhSach" class="card-img-top" alt="Book Image" />
         </div>
 
-        <div class="card-body d-flex flex-column">
+          <div class="card-body d-flex flex-column">
           <!-- Tên sách -->
           <h6 class="fw-bold book-title">{{ book.TenSach }}</h6>
 
@@ -27,7 +28,7 @@
           <p class="text-muted small book-author">{{ book.TacGia }}</p>
 
           <!-- Nút mượn -->
-          <button class="btn btn-primary mt-auto borrow-btn" @click="borrow(book)">
+          <button class="btn btn-primary mt-auto borrow-btn" @click.stop="borrow(book)">
             <i class="bi bi-book-half"></i> Mượn
           </button>
         </div>
@@ -77,6 +78,15 @@ export default {
         params: { id: book.MaSach },
       });
     }
+    ,
+    viewDetail(book) {
+      // Navigate to BookDetail using the MongoDB _id so the backend can fetch by ObjectId
+      if (!book._id) {
+        console.error('Missing book._id for detail route');
+        return;
+      }
+      this.$router.push({ name: 'BookDetail', params: { id: book._id } });
+    }
   }
 };
 </script>
@@ -102,6 +112,8 @@ export default {
   transform: translateY(-6px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
 }
+
+.book-item { cursor: pointer; }
 
 /* Ảnh */
 .image-container {

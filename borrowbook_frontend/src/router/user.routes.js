@@ -23,6 +23,11 @@ export default [
         name: "BorrowHistory",
         component: () => import("@/views/user/BorrowHistory.vue"),
       },
+      {
+        path: "books/:id",
+        name: "BookDetail",
+        component: () => import("@/views/user/BookDetail.vue"),
+      },
     ],
   },
 ];

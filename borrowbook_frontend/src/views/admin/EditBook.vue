@@ -103,6 +103,8 @@ export default {
         MaNXB: "",
         NamXuatBan: new Date().getFullYear(),
         SoQuyen: 1
+        ,
+        MoTa: ""
       },
       editingBookId: null
     };
@@ -138,7 +140,8 @@ export default {
           TacGia: book.TacGia,
           MaNXB: book.MaNXB,
           NamXuatBan: book.NamXuatBan,
-          SoQuyen: book.SoQuyen || book.SoLuong || 1
+          SoQuyen: book.SoQuyen || book.SoLuong || 1,
+          MoTa: book.MoTa || ""
         };
       } catch (error) {
         console.error("Error loading book:", error);
@@ -157,8 +160,7 @@ export default {
           );
           alert("Cập nhật sách thành công!");
         } else {
-          // Auto-generate MaSach for new books
-          this.formData.MaSach = `S${Date.now()}`;
+          // Create new book; server will generate MaSach
           await axios.post("http://localhost:3000/api/books", this.formData);
           alert("Thêm sách thành công!");
         }
